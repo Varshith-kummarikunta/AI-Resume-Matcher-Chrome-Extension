@@ -1,91 +1,27 @@
-# AI Resume Matcher Chrome Extension 🚀
+<div align="center">
 
-An AI-powered Chrome Extension that analyzes resumes against job descriptions and provides ATS compatibility scores, matched skills, missing keywords, and improvement suggestions.
+# 🚀 AI Resume Matcher Chrome Extension
 
-## ✨ Features
+### AI-powered ATS Resume Analyzer built with React, Chrome Extension, Express & Groq AI
 
-- 📄 Upload PDF resumes
-- 🤖 AI-powered ATS analysis using Groq LLM
-- 📊 ATS compatibility score
-- ✅ Matched keywords detection
-- ❌ Missing keywords detection
-- 💡 AI resume improvement suggestions
-- 📈 Modern dashboard UI
-- 🎯 Interview probability analysis
-- 🧩 Chrome Extension (Manifest V3)
-- ⚡ Built with React + Vite + Tailwind CSS
+Compare your Resume against any Job Description and instantly receive an ATS score, interview probability, strengths, weaknesses, skill gaps, AI suggestions, certification recommendations, portfolio project ideas, and a downloadable PDF report.
 
-## Tech Stack
+</div>
 
-Frontend:
-- React
-- Vite
-- Tailwind CSS
+<p align="center">
 
-Chrome Extension:
-- Manifest V3
-- Background Service Worker
-- Content Scripts
+<img src="https://img.shields.io/badge/React-19-blue?logo=react">
 
-Backend:
-- Node.js
-- Express.js
-- PDF Parser
+<img src="https://img.shields.io/badge/Vite-7-purple?logo=vite">
 
-AI:
-- Groq LLM API
+<img src="https://img.shields.io/badge/TailwindCSS-4-38BDF8?logo=tailwindcss">
 
-## Architecture
+<img src="https://img.shields.io/badge/Node.js-Express-green?logo=node.js">
 
-User
-↓
-Chrome Extension
-↓
-React Popup
-↓
-Background Service Worker
-↓
-Express Backend
-↓
-PDF Parser + Groq AI
-↓
-ATS Analysis Result
+<img src="https://img.shields.io/badge/Groq-AI-orange">
 
-## Setup
+<img src="https://img.shields.io/badge/Chrome-Extension-yellow?logo=googlechrome">
 
-Clone repository
+<img src="https://img.shields.io/badge/License-MIT-success">
 
-Install frontend:
-
-npm install
-
-Install backend:
-
-cd backend
-npm install
-
-
-Create backend/.env
-
-GROQ_API_KEY=your_key
-
-Run backend:
-
-npm start
-
-Run frontend:
-
-npm run dev
-
-## Future Improvements
-
-- Resume improvement suggestions
-- Resume rewrite
-- Analysis history
-- PDF report export
-- Authentication
-- Dashboard
-
-## Author
-
-Varshith Kummarikunta
+</p>
