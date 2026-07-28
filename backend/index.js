@@ -35,32 +35,95 @@ app.post("/send", async (req, res) => {
       messages: [
         {
           role: "system",
-          content:
-            "You are an ATS (Applicant Tracking System) resume analyzer.",
+          content: `
+You are an expert ATS Resume Analyzer, Career Coach and Senior Technical Recruiter.
+
+Your job is to compare a resume against a job description.
+
+Always return ONLY valid JSON.
+
+Do not use markdown.
+Do not use backticks.
+Do not explain anything outside JSON.
+`,
         },
         {
           role: "user",
-          content: `Compare the following Resume and Job Description carefully.
-Resume: ${textFromPdf.text}
-Job Description: ${jd}
+          content: `
+Compare the following Resume and Job Description.
 
-Act as a strict ATS resume scoring system.
+==========================
+RESUME
+==========================
 
-Instructions:
-- Analyze skill match, experience relevance, and keyword alignment.
-- Be realistic and slightly strict while scoring.
-- The score must be between 0 and 100.
-- The reason must clearly explain why that score was given in 3-5 sentences.
-- Extract important keywords only.
+${textFromPdf.text}
 
-Return ONLY valid JSON.
+==========================
+JOB DESCRIPTION
+==========================
+
+${jd}
+
+Evaluate the resume like an ATS used by top technology companies.
+
+Return ONLY this JSON:
 
 {
-  "score": number,
-  "reason": "Explanation here",
+  "score": 0,
+  "match_level": "",
+  "reason": "",
+  "matched_keywords": [],
   "missing_keywords": [],
-  "matched_keywords": []
-}`,
+  "strengths": [],
+  "weaknesses": [],
+  "suggestions": {
+    "improve": "",
+    "skills": "",
+    "career": ""
+  },
+  "interview_probability": "",
+  "recommended_projects": [],
+  "recommended_certifications": [],
+  "experience_match": 0,
+  "skills_match": 0,
+  "education_match": 0,
+  "overall_feedback": ""
+}
+
+Rules:
+
+- score must be between 0 and 100
+- experience_match between 0 and 100
+- skills_match between 0 and 100
+- education_match between 0 and 100
+- match_level must be one of:
+  "Excellent"
+  "Good"
+  "Average"
+  "Poor"
+
+- interview_probability must be one of:
+  "Very High"
+  "High"
+  "Medium"
+  "Low"
+
+- strengths should contain 3-5 points.
+
+- weaknesses should contain 3-5 points.
+
+- suggestions.improve should explain how to improve ATS score.
+
+- suggestions.skills should recommend missing technologies.
+
+- suggestions.career should give career advice.
+
+- recommended_projects should suggest 3 portfolio projects.
+
+- recommended_certifications should recommend 3 certifications.
+
+Return ONLY valid JSON.
+`,
         },
       ],
       temperature: 0.2,
@@ -73,7 +136,18 @@ Return ONLY valid JSON.
       .replace(/```/g, "")
       .trim();
 
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      console.error("Invalid AI JSON");
+      console.log(cleaned);
+
+      return res.status(500).json({
+        error: "AI returned invalid JSON",
+      });
+    }
 
     res.status(200).json({
       message: "Working Good",

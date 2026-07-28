@@ -2,16 +2,18 @@
 
 An AI-powered Chrome Extension that analyzes resumes against job descriptions and provides ATS compatibility scores, matched skills, missing keywords, and improvement suggestions.
 
-## Features
+## ✨ Features
 
-✅ Upload Resume PDF
-✅ Analyze Job Description
-✅ AI-powered ATS Score
-✅ Keyword Matching
-✅ Missing Skills Detection
-✅ Chrome Extension Manifest V3
-✅ PDF Resume Parsing
-✅ Groq LLM Integration
+- 📄 Upload PDF resumes
+- 🤖 AI-powered ATS analysis using Groq LLM
+- 📊 ATS compatibility score
+- ✅ Matched keywords detection
+- ❌ Missing keywords detection
+- 💡 AI resume improvement suggestions
+- 📈 Modern dashboard UI
+- 🎯 Interview probability analysis
+- 🧩 Chrome Extension (Manifest V3)
+- ⚡ Built with React + Vite + Tailwind CSS
 
 ## Tech Stack
 
