@@ -70,6 +70,24 @@ async function callApi(message, sendResponse) {
 
     storedResult = data.response;
 
+    // Save history
+    chrome.storage.local.get(["history"], (storage) => {
+      const history = storage.history || [];
+
+      history.unshift({
+        resumeName: storedFileName,
+        score: data.response.score,
+        interviewProbability: data.response.interview_probability,
+        matchedKeywords: data.response.matched_keywords,
+        missingKeywords: data.response.missing_keywords,
+        date: new Date().toLocaleString(),
+      });
+
+      chrome.storage.local.set({
+        history: history.slice(0, 10),
+      });
+    });
+
     sendResponse({
       score: data.response.score,
     });

@@ -22,7 +22,21 @@ app.post("/send", async (req, res) => {
   try {
     let { jd, base64 } = req.body;
 
-    base64 = base64.split(",")[1];
+    if (!jd || !base64) {
+      return res.status(400).json({
+        error: "Job description and resume are required.",
+      });
+    }
+
+    const parts = base64.split(",");
+
+    if (parts.length < 2) {
+      return res.status(400).json({
+        error: "Invalid resume format.",
+      });
+    }
+
+    base64 = parts[1];
 
     const buffer = Buffer.from(base64, "base64");
 
@@ -82,7 +96,13 @@ Return ONLY this JSON:
     "career": ""
   },
   "interview_probability": "",
-  "recommended_projects": [],
+  "recommended_projects": [
+  {
+    "title": "",
+    "description": "",
+    "difficulty": ""
+  }
+],
   "recommended_certifications": [],
   "experience_match": 0,
   "skills_match": 0,
@@ -121,7 +141,13 @@ Rules:
 - recommended_projects should suggest 3 portfolio projects.
 
 - recommended_certifications should recommend 3 certifications.
-
+- Recommend exactly 3 portfolio projects.
+- Each project should help the candidate become a stronger match for the job.
+- Difficulty must be one of:
+  Beginner
+  Intermediate
+  Advanced
+- Description should be 1–2 sentences explaining why the project is valuable.
 Return ONLY valid JSON.
 `,
         },
@@ -130,6 +156,10 @@ Return ONLY valid JSON.
     });
 
     const aiResponse = completion.choices[0].message.content;
+
+    console.log("========== AI RESPONSE ==========");
+    console.log(aiResponse);
+    console.log("=================================");
 
     const cleaned = aiResponse
       .replace(/```json/g, "")
@@ -148,6 +178,25 @@ Return ONLY valid JSON.
         error: "AI returned invalid JSON",
       });
     }
+
+    parsed.skills_match ??= 0;
+    parsed.experience_match ??= 0;
+    parsed.education_match ??= 0;
+
+    parsed.strengths ??= [];
+    parsed.weaknesses ??= [];
+
+    parsed.recommended_projects ??= [];
+    parsed.recommended_certifications ??= [];
+
+    parsed.suggestions ??= {
+      improve: "",
+      skills: "",
+      career: "",
+    };
+
+    parsed.interview_probability ??= "Medium";
+    parsed.match_level ??= "Average";
 
     res.status(200).json({
       message: "Working Good",

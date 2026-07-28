@@ -13,9 +13,12 @@
     "@tailwindcss/vite": "^4.2.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.27.0",
     "react": "^19.2.0",
     "react-circular-progressbar": "^2.2.0",
+    "react-countup": "^6.5.3",
     "react-dom": "^19.2.0",
     "react-dropzone": "^19.1.1",
     "tailwindcss": "^4.2.1"

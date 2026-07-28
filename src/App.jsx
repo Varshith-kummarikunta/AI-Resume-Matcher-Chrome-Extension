@@ -6,6 +6,15 @@ import UploadCard from "./components/UploadCard";
 import ScoreCard from "./components/ScoreCard";
 import KeywordSection from "./components/KeywordSection";
 import SuggestionCard from "./components/SuggestionCard";
+import MatchBreakdown from "./components/MatchBreakdown";
+import StrengthCard from "./components/StrengthCard";
+import WeaknessCard from "./components/WeaknessCard";
+import InterviewCard from "./components/InterviewCard";
+import CertificationCard from "./components/CertificationCard";
+import ProjectCard from "./components/ProjectCard";
+import ExportReportButton from "./components/ExportReportButton";
+import HistoryCard from "./components/HistoryCard";
+
 function App() {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
@@ -81,9 +90,25 @@ function App() {
 
       <ScoreCard result={result} resumeName={resumeName} />
 
+      <InterviewCard result={result} />
+
+      <MatchBreakdown result={result} />
+
+      <StrengthCard result={result} />
+
+      <WeaknessCard result={result} />
+
       <KeywordSection result={result} />
 
       <SuggestionCard result={result} />
+
+      <CertificationCard result={result} />
+
+      <ProjectCard result={result} />
+
+      <ExportReportButton result={result} resumeName={resumeName} />
+
+      <HistoryCard />
 
       {result && (
         <button
