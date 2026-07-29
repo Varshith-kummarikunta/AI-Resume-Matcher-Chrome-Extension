@@ -49,21 +49,44 @@ async function callApi(message, sendResponse) {
   }
 
   try {
-    const apiData = await fetch("http://localhost:5000/send", {
-      method: "POST",
-      body: JSON.stringify({ jd: message.discription, base64: storedResume }),
-      headers: {
-        "Content-Type": "application/json",
+    const apiData = await fetch(
+      "https://ai-resume-matcher-chrome-extension-production.up.railway.app/send",
+      {
+        method: "POST",
+        body: JSON.stringify({ jd: message.discription, base64: storedResume }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
-    const data = await apiData.json();
+    const text = await apiData.text();
+
+    console.log("Raw Response:", text);
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      sendResponse({
+        error: `Backend returned invalid JSON (HTTP ${apiData.status})`,
+      });
+      return;
+    }
 
     console.log("API Response:", data);
 
-    if (!apiData.ok || !data.response) {
+    if (!apiData.ok) {
       sendResponse({
-        error: data.error || "Invalid response from server",
+        error: data.error || `Server error (HTTP ${apiData.status})`,
+      });
+      return;
+    }
+
+    if (!data.response) {
+      sendResponse({
+        error: "Invalid response format from server",
       });
       return;
     }
@@ -92,10 +115,10 @@ async function callApi(message, sendResponse) {
       score: data.response.score,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Fetch Error:", err);
 
     sendResponse({
-      error: "API request failed",
+      error: err.message || "Network request failed",
     });
   }
 }
