@@ -16,6 +16,14 @@ const groq = new Groq({
 
 app.listen(PORT, () => console.log("Server running at", PORT));
 
+app.get("/", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "AI Resume Matcher Backend",
+    version: "2.0",
+  });
+});
+
 app.post("/send", async (req, res) => {
   console.log("Request received");
   console.log(req.body);
