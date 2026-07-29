@@ -21,6 +21,7 @@
     "react-countup": "^6.5.3",
     "react-dom": "^19.2.0",
     "react-dropzone": "^19.1.1",
+    "react-spinners": "^0.17.0",
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {

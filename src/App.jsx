@@ -20,6 +20,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [resumeName, setResumeName] = useState();
   const [resumeUploaded, setResumeUploaded] = useState("");
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (window.chrome?.runtime?.sendMessage) {
       chrome.runtime.sendMessage({ type: "GET_RESULT" }, (response) => {
@@ -35,9 +36,11 @@ function App() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
 
     if (!file) {
       alert("Upload the resume");
+      setLoading(false);
       return;
     }
 
@@ -53,16 +56,19 @@ function App() {
         (response) => {
           if (chrome.runtime.lastError) {
             console.error(chrome.runtime.lastError.message);
+            setLoading(false);
             return;
           }
 
           if (response?.success) {
             setResumeUploaded("Resume uploaded successfully");
+            setLoading(false);
           }
         },
       );
     } else {
       alert("This feature works only inside the Chrome Extension.");
+      setLoading(false);
     }
 
     setResult(null);
@@ -81,11 +87,11 @@ function App() {
     <div className="w-[390px] min-h-screen bg-slate-100 p-5">
       <Header />
       <UploadCard
-        file={file}
         setFile={setFile}
         handleSubmit={handleSubmit}
         resumeUploaded={resumeUploaded}
         resumeName={resumeName}
+        loading={loading}
       />
 
       <ScoreCard result={result} resumeName={resumeName} />
@@ -114,7 +120,7 @@ function App() {
         <button
           onClick={() => {
             if (window.chrome?.runtime?.sendMessage) {
-              chrome.runtime.sendMessage({ type: "CLEAR_RESULT" });
+              chrome.runtime.sendMessage({ type: "CLEAR_RESULT" }, () => {});
             }
             setResult(null);
             setFile(null);

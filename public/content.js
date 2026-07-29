@@ -44,7 +44,32 @@ function createTooltip(selectedText) {
   document.body.appendChild(tooltip);
 
   tooltip.onclick = () => {
-    tooltip.innerText = "Loading...";
+    tooltip.style.pointerEvents = "none";
+    tooltip.innerHTML = `
+<div style="display:flex;align-items:center;gap:8px;">
+  <div style="
+      width:14px;
+      height:14px;
+      border:2px solid #ddd;
+      border-top:2px solid #3b82f6;
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+  "></div>
+  <span>Analysing...</span>
+</div>
+`;
+
+    if (!document.getElementById("spinner-style")) {
+      const style = document.createElement("style");
+      style.id = "spinner-style";
+      style.textContent = `
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  `;
+      document.head.appendChild(style);
+    }
 
     chrome.runtime.sendMessage(
       {
@@ -52,17 +77,42 @@ function createTooltip(selectedText) {
         discription: selectedText,
       },
       (response) => {
-        if (typeof response === "object") {
+        // Extension error
+        if (chrome.runtime.lastError) {
+          tooltip.style.pointerEvents = "auto";
+          tooltip.innerText = chrome.runtime.lastError.message;
+          return;
+        }
+
+        if (response && typeof response === "object") {
           if (response.error) {
             tooltip.innerText = response.error;
           } else if (response.score !== undefined) {
-            tooltip.innerText = response.score + "%";
+            tooltip.innerHTML = `
+<div style="
+display:flex;
+align-items:center;
+gap:8px;
+font-weight:600;
+color:#22c55e;
+">
+✅ ATS Score: ${response.score}%
+</div>
+`;
           } else {
             tooltip.innerText = JSON.stringify(response);
           }
         } else {
           tooltip.innerText = response;
         }
+
+        tooltip.style.pointerEvents = "auto";
+
+        setTimeout(() => {
+          if (tooltip) {
+            tooltip.remove();
+          }
+        }, 2500);
       },
     );
   };

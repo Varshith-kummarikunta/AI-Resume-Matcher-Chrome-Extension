@@ -176,7 +176,15 @@ AI-Resume-Matcher-Chrome-Extension
 
 GitHub:
 https://github.com/Varshith-kummarikunta
+LinkedIn: 
+https://www.linkedin.com/in/varshith-kummarikunta-067253328/
+Portfolio: 
+https://varshith-kummarikunta.vercel.app/
 
 ---
+
+## 📄 License
+
+This project is licensed under the MIT License.
 
 ⭐ If you found this project useful, please give it a Star.

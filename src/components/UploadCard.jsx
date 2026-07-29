@@ -1,13 +1,16 @@
 import { Upload, FileText, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { ClipLoader } from "react-spinners";
+import { useRef } from "react";
 
 export default function UploadCard({
-  file,
   setFile,
   handleSubmit,
   resumeUploaded,
   resumeName,
+  loading,
 }) {
+  const fileInputRef = useRef(null);
   return (
     <motion.form
       onSubmit={handleSubmit}
@@ -17,18 +20,14 @@ export default function UploadCard({
       className="bg-white rounded-2xl shadow-lg border border-slate-200 p-5"
     >
       <div className="flex flex-col items-center justify-center border-2 border-dashed border-blue-300 rounded-xl p-6 hover:border-blue-500 transition-all">
-
         <Upload className="w-12 h-12 text-blue-600 mb-3" />
 
-        <p className="font-semibold text-slate-700">
-          Upload your Resume
-        </p>
+        <p className="font-semibold text-slate-700">Upload your Resume</p>
 
-        <p className="text-sm text-slate-500 mb-4">
-          PDF files only
-        </p>
+        <p className="text-sm text-slate-500 mb-4">PDF files only</p>
 
         <input
+          ref={fileInputRef}
           type="file"
           accept=".pdf"
           onChange={(e) => {
@@ -52,36 +51,38 @@ export default function UploadCard({
 
         {resumeName && (
           <div className="flex items-center gap-2 mt-4 text-green-600">
-
             <FileText className="w-5 h-5" />
 
-            <span className="text-sm font-medium">
-              {resumeName}
-            </span>
-
+            <span className="text-sm font-medium">{resumeName}</span>
           </div>
         )}
 
         {resumeUploaded && (
           <div className="flex items-center gap-2 mt-2 text-green-600">
-
             <CheckCircle2 className="w-5 h-5" />
 
-            <span className="text-sm">
-              {resumeUploaded}
-            </span>
-
+            <span className="text-sm">{resumeUploaded}</span>
           </div>
         )}
 
         <button
           type="submit"
-          disabled={!file}
-          className="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-semibold transition"
+          disabled={loading}
+          className={`mt-5 w-full rounded-lg py-2 text-white transition ${
+            loading
+              ? "bg-slate-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Upload Resume
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <ClipLoader size={16} color="#fff" />
+              Uploading Resume...
+            </div>
+          ) : (
+            "Upload Resume"
+          )}
         </button>
-
       </div>
     </motion.form>
   );
