@@ -83,6 +83,26 @@ function App() {
     });
   }
 
+
+  function handleViewHistory(item) {
+  setResult({
+    score: item.score,
+    interview_probability: item.interviewProbability,
+    matched_keywords: item.matchedKeywords || [],
+    missing_keywords: item.missingKeywords || [],
+    strengths: item.strengths || [],
+    weaknesses: item.weaknesses || [],
+    suggestions: item.suggestions || [],
+    recommended_certifications:
+      item.certifications || [],
+    recommended_projects:
+      item.projects || [],
+    reason: item.reason || "",
+  });
+
+  setResumeName(item.resumeName);
+}
+
   return (
     <div className="w-[390px] min-h-screen bg-slate-100 p-5">
       <Header />
@@ -114,7 +134,7 @@ function App() {
 
       <ExportReportButton result={result} resumeName={resumeName} />
 
-      <HistoryCard />
+      <HistoryCard onView={handleViewHistory} />
 
       {result && (
         <button

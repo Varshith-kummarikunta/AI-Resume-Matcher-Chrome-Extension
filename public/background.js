@@ -1,10 +1,10 @@
 let storedResume = null;
 let storedFileName = null;
+let storedResult = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CHECK_SCORE") {
     callApi(message, sendResponse);
-
     return true;
   }
 
@@ -25,6 +25,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       result: storedResult,
       fileName: storedFileName,
     });
+
+    return true;
   }
 
   if (message.type === "CLEAR_RESULT") {
@@ -38,13 +40,62 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true;
   }
-});
 
-let storedResult = null;
+  if (message.type === "GET_HISTORY") {
+    chrome.storage.local.get(["history"], (data) => {
+      sendResponse({
+        history: data.history || [],
+      });
+    });
+
+    return true;
+  }
+
+  if (message.type === "DELETE_HISTORY") {
+    chrome.storage.local.get(["history"], (data) => {
+      const history = data.history || [];
+
+      const updatedHistory = history.filter(
+        (item) => item.id !== message.id
+      );
+
+      chrome.storage.local.set(
+        {
+          history: updatedHistory,
+        },
+        () => {
+          sendResponse({
+            success: true,
+          });
+        }
+      );
+    });
+
+    return true;
+  }
+
+  if (message.type === "CLEAR_HISTORY") {
+    chrome.storage.local.set(
+      {
+        history: [],
+      },
+      () => {
+        sendResponse({
+          success: true,
+        });
+      }
+    );
+
+    return true;
+  }
+});
 
 async function callApi(message, sendResponse) {
   if (!storedResume) {
-    sendResponse("Upload the resume");
+    sendResponse({
+      error: "Upload the resume first.",
+    });
+
     return;
   }
 
@@ -53,11 +104,14 @@ async function callApi(message, sendResponse) {
       "https://ai-resume-matcher-chrome-extension-production.up.railway.app/send",
       {
         method: "POST",
-        body: JSON.stringify({ jd: message.discription, base64: storedResume }),
+        body: JSON.stringify({
+          jd: message.discription,
+          base64: storedResume,
+        }),
         headers: {
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     const text = await apiData.text();
@@ -72,6 +126,7 @@ async function callApi(message, sendResponse) {
       sendResponse({
         error: `Backend returned invalid JSON (HTTP ${apiData.status})`,
       });
+
       return;
     }
 
@@ -81,34 +136,74 @@ async function callApi(message, sendResponse) {
       sendResponse({
         error: data.error || `Server error (HTTP ${apiData.status})`,
       });
+
       return;
     }
 
     if (!data.response) {
       sendResponse({
-        error: "Invalid response format from server",
+        error: "Invalid response format from server.",
       });
+
       return;
     }
 
     storedResult = data.response;
 
-    // Save history
+    // -----------------------------
+    // SAVE ANALYSIS TO HISTORY
+    // -----------------------------
+
     chrome.storage.local.get(["history"], (storage) => {
       const history = storage.history || [];
 
-      history.unshift({
-        resumeName: storedFileName,
-        score: data.response.score,
-        interviewProbability: data.response.interview_probability,
-        matchedKeywords: data.response.matched_keywords,
-        missingKeywords: data.response.missing_keywords,
-        date: new Date().toLocaleString(),
-      });
+      const historyItem = {
+        id: crypto.randomUUID(),
 
-      chrome.storage.local.set({
-        history: history.slice(0, 10),
-      });
+        resumeName: storedFileName,
+
+        score: data.response.score,
+
+        interviewProbability:
+          data.response.interview_probability || null,
+
+        matchedKeywords:
+          data.response.matched_keywords || [],
+
+        missingKeywords:
+          data.response.missing_keywords || [],
+
+        strengths:
+          data.response.strengths || [],
+
+        weaknesses:
+          data.response.weaknesses || [],
+
+        suggestions:
+          data.response.suggestions || [],
+
+        certifications:
+          data.response.recommended_certifications || [],
+
+        projects:
+          data.response.recommended_projects || [],
+
+        reason:
+          data.response.reason || "",
+
+        date: new Date().toISOString(),
+      };
+
+      history.unshift(historyItem);
+
+      chrome.storage.local.set(
+        {
+          history: history.slice(0, 20),
+        },
+        () => {
+          console.log("Analysis saved to history.");
+        }
+      );
     });
 
     sendResponse({
@@ -118,7 +213,7 @@ async function callApi(message, sendResponse) {
     console.error("Fetch Error:", err);
 
     sendResponse({
-      error: err.message || "Network request failed",
+      error: err.message || "Network request failed.",
     });
   }
 }
