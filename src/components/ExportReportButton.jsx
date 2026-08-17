@@ -1,109 +1,122 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Download } from "lucide-react";
+import { useState } from "react";
 
 export default function ExportReportButton({ result, resumeName }) {
+  const [exporting, setExporting] = useState(false);
+
   if (!result) return null;
 
-  const exportPDF = () => {
-    const doc = new jsPDF();
+  const exportPDF = async () => {
+    try {
+      setExporting(true);
 
-    // Title
-    doc.setFontSize(20);
-    doc.text("AI Resume Matcher Report", 14, 20);
+      // Load PDF libraries only when the user requests an export.
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import("jspdf"),
+        import("jspdf-autotable"),
+      ]);
 
-    // Resume
-    doc.setFontSize(12);
-    doc.text(`Resume: ${resumeName}`, 14, 32);
+      const doc = new jsPDF();
 
-    // Score
-    doc.setFontSize(16);
-    doc.text(`ATS Score: ${result.score}%`, 14, 45);
+      // Title
+      doc.setFontSize(20);
+      doc.text("AI Resume Matcher Report", 14, 20);
 
-    // Match Level
-    doc.setFontSize(12);
-    doc.text(`Match Level: ${result.match_level}`, 14, 55);
+      // Resume
+      doc.setFontSize(12);
+      doc.text(`Resume: ${resumeName || "Resume"}`, 14, 32);
 
-    // Interview Probability
-    doc.text(
-      `Interview Probability: ${result.interview_probability}`,
-      14,
-      65
-    );
+      // Score
+      doc.setFontSize(16);
+      doc.text(`ATS Score: ${result.score}%`, 14, 45);
 
-    // AI Analysis
-    doc.setFontSize(15);
-    doc.text("AI Analysis", 14, 80);
+      // Match Level
+      doc.setFontSize(12);
+      doc.text(`Match Level: ${result.match_level || "N/A"}`, 14, 55);
 
-    doc.setFontSize(11);
+      // Interview Probability
+      doc.text(
+        `Interview Probability: ${
+          result.interview_probability || "N/A"
+        }`,
+        14,
+        65,
+      );
 
-    const reason = doc.splitTextToSize(
-      result.reason || "",
-      180
-    );
+      // AI Analysis
+      doc.setFontSize(15);
+      doc.text("AI Analysis", 14, 80);
 
-    doc.text(reason, 14, 90);
+      doc.setFontSize(11);
 
-    // Keywords
+      const reason = doc.splitTextToSize(result.reason || "", 180);
 
-    autoTable(doc, {
-      startY: 120,
-      head: [["Matched Skills", "Missing Skills"]],
-      body: [
-        [
-          result.matched_keywords.join(", "),
-          result.missing_keywords.join(", "),
+      doc.text(reason, 14, 90);
+
+      // Keywords
+      autoTable(doc, {
+        startY: 120,
+        head: [["Matched Skills", "Missing Skills"]],
+        body: [
+          [
+            (result.matched_keywords || []).join(", "),
+            (result.missing_keywords || []).join(", "),
+          ],
         ],
-      ],
-    });
+      });
 
-    // Strengths
+      // Strengths
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [["Strengths"]],
+        body: (result.strengths || []).map((item) => [item]),
+      });
 
-    autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 10,
-      head: [["Strengths"]],
-      body: result.strengths.map((s) => [s]),
-    });
+      // Weaknesses
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [["Weaknesses"]],
+        body: (result.weaknesses || []).map((item) => [item]),
+      });
 
-    // Weaknesses
+      // Certifications
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [["Recommended Certifications"]],
+        body: (result.recommended_certifications || []).map((item) => [
+          item,
+        ]),
+      });
 
-    autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 10,
-      head: [["Weaknesses"]],
-      body: result.weaknesses.map((s) => [s]),
-    });
+      // Projects
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [["Recommended Projects"]],
+        body: (result.recommended_projects || []).map((project) => [
+          typeof project === "string"
+            ? project
+            : project.title || "Recommended Project",
+        ]),
+      });
 
-    // Certifications
-
-    autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 10,
-      head: [["Recommended Certifications"]],
-      body: result.recommended_certifications.map((s) => [s]),
-    });
-
-    // Projects
-
-    autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 10,
-      head: [["Recommended Projects"]],
-      body: result.recommended_projects.map((project) => [
-        typeof project === "string"
-          ? project
-          : project.title,
-      ]),
-    });
-
-    doc.save("ATS_Report.pdf");
+      doc.save("ATS_Report.pdf");
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("Failed to export the PDF report.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
     <button
       onClick={exportPDF}
-      className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition"
+      disabled={exporting}
+      className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition"
     >
       <Download size={18} />
 
-      Export Report as PDF
+      {exporting ? "Generating PDF..." : "Export Report as PDF"}
     </button>
   );
 }

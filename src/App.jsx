@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import { useEffect } from "react";
 import Header from "./components/Header";
 import UploadCard from "./components/UploadCard";
 import ScoreCard from "./components/ScoreCard";
@@ -14,6 +13,8 @@ import CertificationCard from "./components/CertificationCard";
 import ProjectCard from "./components/ProjectCard";
 import ExportReportButton from "./components/ExportReportButton";
 import HistoryCard from "./components/HistoryCard";
+import useChromeRuntime from "./hooks/useChromeRuntime";
+import { blobToBase64 } from "./utils/helpers";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -21,18 +22,25 @@ function App() {
   const [resumeName, setResumeName] = useState();
   const [resumeUploaded, setResumeUploaded] = useState("");
   const [loading, setLoading] = useState(false);
+  const { isExtension, sendMessage } = useChromeRuntime();
+
   useEffect(() => {
-    if (window.chrome?.runtime?.sendMessage) {
-      chrome.runtime.sendMessage({ type: "GET_RESULT" }, (response) => {
+    if (!isExtension) {
+      console.log("Running in Vite development mode");
+      return;
+    }
+
+    sendMessage({ type: "GET_RESULT" })
+      .then((response) => {
         if (response?.result) {
           setResult(response.result);
           setResumeName(response.fileName);
         }
+      })
+      .catch((error) => {
+        console.error("Failed to load stored result:", error);
       });
-    } else {
-      console.log("Running in Vite development mode");
-    }
-  }, []);
+  }, [isExtension, sendMessage]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -74,34 +82,62 @@ function App() {
     setResult(null);
   }
 
-  function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = reject;
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  }
-
-
   function handleViewHistory(item) {
   setResult({
-    score: item.score,
-    interview_probability: item.interviewProbability,
-    matched_keywords: item.matchedKeywords || [],
-    missing_keywords: item.missingKeywords || [],
-    strengths: item.strengths || [],
-    weaknesses: item.weaknesses || [],
-    suggestions: item.suggestions || [],
-    recommended_certifications:
-      item.certifications || [],
-    recommended_projects:
-      item.projects || [],
+    score: item.score ?? 0,
+
+    match_level: item.matchLevel || "Unknown",
+
     reason: item.reason || "",
+
+    interview_probability:
+      item.interviewProbability || null,
+
+    matched_keywords:
+      item.matchedKeywords || [],
+
+    missing_keywords:
+      item.missingKeywords || [],
+
+    strengths:
+      item.strengths || [],
+
+    weaknesses:
+      item.weaknesses || [],
+
+    suggestions:
+      item.suggestions || {
+        improve: "",
+        skills: "",
+        career: "",
+      },
+
+    recommended_certifications:
+      Array.isArray(item.certifications)
+        ? item.certifications
+        : [],
+
+    recommended_projects:
+      Array.isArray(item.projects)
+        ? item.projects
+        : [],
+
+    skills_match:
+      item.skillsMatch ?? 0,
+
+    experience_match:
+      item.experienceMatch ?? 0,
+
+    education_match:
+      item.educationMatch ?? 0,
+
+    overall_feedback:
+      item.overallFeedback || "",
   });
 
-  setResumeName(item.resumeName);
+  setResumeName(item.resumeName || "Resume");
 }
+
 
   return (
     <div className="w-[390px] min-h-screen bg-slate-100 p-5">

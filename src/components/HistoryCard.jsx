@@ -12,21 +12,16 @@ export default function HistoryCard({ onView }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
-  function loadHistory() {
-    if (!window.chrome?.storage?.local) {
-      setLoading(false);
-      return;
-    }
-
-    chrome.storage.local.get(["history"], (data) => {
-      setHistory(data.history || []);
-      setLoading(false);
-    });
+ useEffect(() => {
+  if (!window.chrome?.storage?.local) {
+    return;
   }
+
+  chrome.storage.local.get(["history"], (data) => {
+    setHistory(data.history || []);
+    setLoading(false);
+  });
+}, []);
 
   function deleteHistory(id) {
     if (!window.chrome?.runtime?.sendMessage) return;
@@ -209,7 +204,7 @@ export default function HistoryCard({ onView }) {
                   </p>
 
                   <p className="text-[10px] text-slate-500">
-                    {getScoreLabel(item.score)}
+                    {item.matchLevel || getScoreLabel(item.score)}
                   </p>
                 </div>
               </div>

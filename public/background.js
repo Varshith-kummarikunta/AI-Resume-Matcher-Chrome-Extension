@@ -158,41 +158,62 @@ async function callApi(message, sendResponse) {
       const history = storage.history || [];
 
       const historyItem = {
-        id: crypto.randomUUID(),
+  id: crypto.randomUUID(),
 
-        resumeName: storedFileName,
+  // Resume
+  resumeName: storedFileName,
 
-        score: data.response.score,
+  // Main ATS results
+  score: data.response.score,
+  matchLevel: data.response.match_level || "Unknown",
+  reason: data.response.reason || "",
 
-        interviewProbability:
-          data.response.interview_probability || null,
+  // Interview
+  interviewProbability:
+    data.response.interview_probability || null,
 
-        matchedKeywords:
-          data.response.matched_keywords || [],
+  // Keyword analysis
+  matchedKeywords:
+    data.response.matched_keywords || [],
 
-        missingKeywords:
-          data.response.missing_keywords || [],
+  missingKeywords:
+    data.response.missing_keywords || [],
 
-        strengths:
-          data.response.strengths || [],
+  // Resume analysis
+  strengths:
+    data.response.strengths || [],
 
-        weaknesses:
-          data.response.weaknesses || [],
+  weaknesses:
+    data.response.weaknesses || [],
 
-        suggestions:
-          data.response.suggestions || [],
+  // AI suggestions
+  suggestions:
+    data.response.suggestions || {},
 
-        certifications:
-          data.response.recommended_certifications || [],
+  // Recommendations
+  certifications:
+    data.response.recommended_certifications || [],
 
-        projects:
-          data.response.recommended_projects || [],
+  projects:
+    data.response.recommended_projects || [],
 
-        reason:
-          data.response.reason || "",
+  // Match breakdown
+  skillsMatch:
+    data.response.skills_match ?? 0,
 
-        date: new Date().toISOString(),
-      };
+  experienceMatch:
+    data.response.experience_match ?? 0,
+
+  educationMatch:
+    data.response.education_match ?? 0,
+
+  // Overall feedback
+  overallFeedback:
+    data.response.overall_feedback || "",
+
+  // Timestamp
+  date: new Date().toISOString(),
+};
 
       history.unshift(historyItem);
 

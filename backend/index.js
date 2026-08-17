@@ -178,7 +178,7 @@ Return ONLY valid JSON.
 
     try {
       parsed = JSON.parse(cleaned);
-    } catch (err) {
+    } catch {
       console.error("Invalid AI JSON");
       console.log(cleaned);
 
