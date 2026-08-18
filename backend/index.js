@@ -592,60 +592,138 @@ one-to-two-page resume.
       });
     }
 
-    // -----------------------------------------
-    // NORMALIZE RESPONSE
-    // -----------------------------------------
+ // -----------------------------------------
+// NORMALIZE RESPONSE
+// -----------------------------------------
 
-    parsed.target_job_title =
-      typeof parsed.target_job_title === "string"
-        ? parsed.target_job_title
-        : "";
+parsed.target_job_title =
+  typeof parsed.target_job_title === "string"
+    ? parsed.target_job_title.trim()
+    : "";
 
-    parsed.professional_summary =
-      typeof parsed.professional_summary === "string"
-        ? parsed.professional_summary
-        : "";
+parsed.professional_summary =
+  typeof parsed.professional_summary === "string"
+    ? parsed.professional_summary.trim()
+    : "";
 
-    parsed.skills = Array.isArray(parsed.skills)
-      ? parsed.skills
-      : [];
-
-    parsed.experience = Array.isArray(parsed.experience)
-      ? parsed.experience
-      : [];
-
-    parsed.projects = Array.isArray(parsed.projects)
-      ? parsed.projects
-      : [];
-
-    parsed.education = Array.isArray(parsed.education)
-      ? parsed.education
-      : [];
-
-    parsed.certifications = Array.isArray(
-      parsed.certifications,
+parsed.skills = Array.isArray(parsed.skills)
+  ? parsed.skills.filter(
+      (skill) => typeof skill === "string" && skill.trim(),
     )
-      ? parsed.certifications
-      : [];
+  : [];
 
-    parsed.ats_keywords_used = Array.isArray(
-      parsed.ats_keywords_used,
+parsed.experience = Array.isArray(parsed.experience)
+  ? parsed.experience
+  : [];
+
+parsed.projects = Array.isArray(parsed.projects)
+  ? parsed.projects
+  : [];
+
+parsed.education = Array.isArray(parsed.education)
+  ? parsed.education
+  : [];
+
+parsed.certifications = Array.isArray(
+  parsed.certifications,
+)
+  ? parsed.certifications.filter(
+      (item) => typeof item === "string" && item.trim(),
     )
-      ? parsed.ats_keywords_used
-      : [];
+  : [];
 
-    parsed.keywords_not_used = Array.isArray(
-      parsed.keywords_not_used,
+parsed.ats_keywords_used = Array.isArray(
+  parsed.ats_keywords_used,
+)
+  ? parsed.ats_keywords_used.filter(
+      (keyword) =>
+        typeof keyword === "string" && keyword.trim(),
     )
-      ? parsed.keywords_not_used
-      : [];
+  : [];
 
-    parsed.optimization_notes = Array.isArray(
-      parsed.optimization_notes,
+parsed.keywords_not_used = Array.isArray(
+  parsed.keywords_not_used,
+)
+  ? parsed.keywords_not_used.filter(
+      (keyword) =>
+        typeof keyword === "string" && keyword.trim(),
     )
-      ? parsed.optimization_notes
-      : [];
+  : [];
 
+parsed.optimization_notes = Array.isArray(
+  parsed.optimization_notes,
+)
+  ? parsed.optimization_notes.filter(
+      (note) =>
+        typeof note === "string" && note.trim(),
+    )
+  : [];
+
+// -----------------------------------------
+// VERIFY ATS KEYWORDS AGAINST RESUME
+// -----------------------------------------
+
+const resumeTextLower =
+  textFromPdf.text.toLowerCase();
+
+const keywordAliases = {
+  "mern stack": ["mern"],
+  "react.js": ["react", "react.js"],
+  "node.js": ["node", "node.js"],
+  "express.js": ["express", "express.js"],
+  "mongodb": ["mongodb"],
+  "rest apis": ["rest api", "rest apis", "restful api", "restful apis"],
+  "javascript": ["javascript"],
+  "html": ["html", "html5"],
+  "css": ["css", "css3"],
+  "git": ["git"],
+  "github": ["github"],
+  "responsive design": ["responsive", "responsive design"],
+  "jwt authentication": ["jwt"],
+  "socket.io": ["socket.io"],
+  "websockets": ["websocket", "websockets"],
+  "cloud deployment": [
+    "railway",
+    "render",
+    "vercel",
+    "cloud deployment",
+    "deployed",
+  ],
+};
+
+const verifiedKeywords = [];
+const rejectedKeywords = [];
+
+for (const keyword of parsed.ats_keywords_used) {
+  const normalizedKeyword = keyword
+    .toLowerCase()
+    .trim();
+
+  const aliases = keywordAliases[normalizedKeyword];
+
+  const isSupported = aliases
+    ? aliases.some((alias) =>
+        resumeTextLower.includes(alias),
+      )
+    : resumeTextLower.includes(normalizedKeyword);
+
+  if (isSupported) {
+    verifiedKeywords.push(keyword);
+  } else {
+    rejectedKeywords.push(keyword);
+  }
+}
+
+parsed.ats_keywords_used = [
+  ...new Set(verifiedKeywords),
+];
+
+parsed.keywords_not_used = [
+  ...new Set([
+    ...parsed.keywords_not_used,
+    ...rejectedKeywords,
+  ]),
+];
     // -----------------------------------------
     // SEND OPTIMIZED RESUME
     // -----------------------------------------
