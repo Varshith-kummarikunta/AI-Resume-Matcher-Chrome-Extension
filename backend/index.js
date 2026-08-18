@@ -233,6 +233,10 @@ app.post("/optimize-resume", async (req, res) => {
       });
     }
 
+    // -----------------------------------------
+    // EXTRACT BASE64 FROM DATA URL
+    // -----------------------------------------
+
     const parts = base64.split(",");
 
     if (parts.length < 2) {
@@ -243,11 +247,33 @@ app.post("/optimize-resume", async (req, res) => {
 
     base64 = parts[1];
 
+    // -----------------------------------------
+    // CONVERT PDF TO BUFFER
+    // -----------------------------------------
+
     const buffer = Buffer.from(base64, "base64");
 
-    const parser = new PDFParse({ data: buffer });
+    // -----------------------------------------
+    // EXTRACT RESUME TEXT
+    // -----------------------------------------
+
+    const parser = new PDFParse({
+      data: buffer,
+    });
 
     const textFromPdf = await parser.getText();
+
+    if (!textFromPdf?.text?.trim()) {
+      return res.status(400).json({
+        error: "Could not extract text from the resume PDF.",
+      });
+    }
+
+    console.log("Resume text extracted successfully.");
+
+    // -----------------------------------------
+    // AI OPTIMIZATION
+    // -----------------------------------------
 
     const completion = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
@@ -255,64 +281,119 @@ app.post("/optimize-resume", async (req, res) => {
       messages: [
         {
           role: "system",
+
           content: `
-You are an expert resume writer, ATS optimization specialist,
-technical recruiter, and career coach.
+You are an expert ATS resume writer, technical recruiter,
+career coach, and resume optimization specialist.
 
-Your task is to create a job-targeted resume from an existing resume
-and a specific job description.
+Your task is to rewrite an existing resume so it is better aligned
+with a specific job description.
 
-CRITICAL RULES:
+The candidate's factual information is the highest priority.
 
-1. NEVER invent experience.
-2. NEVER invent employment history.
-3. NEVER invent education.
-4. NEVER invent certifications.
-5. NEVER invent projects.
-6. NEVER invent technologies the candidate has not demonstrated.
-7. NEVER invent job titles, companies, dates, achievements, metrics,
-   responsibilities, or qualifications.
-8. You may rewrite existing information professionally.
-9. You may improve bullet points using information already present.
-10. You may reorder existing skills according to the job description.
-11. You may prioritize relevant projects and experience.
-12. You may naturally incorporate job-description keywords ONLY when
-    the existing resume supports that skill or concept.
-13. Do not keyword stuff.
-14. Keep the resume ATS-friendly.
-15. Use clear professional language.
-16. Preserve factual accuracy above everything else.
+STRICT FACTUAL ACCURACY RULES:
+
+1. NEVER invent work experience.
+
+2. NEVER invent an employer or company.
+
+3. NEVER invent a job title.
+
+4. NEVER invent employment dates.
+
+5. NEVER invent education.
+
+6. NEVER invent a degree.
+
+7. NEVER invent certifications.
+
+8. NEVER invent projects.
+
+9. NEVER invent technologies.
+
+10. NEVER invent programming languages.
+
+11. NEVER invent tools, frameworks, libraries, databases,
+cloud platforms, or AI technologies.
+
+12. NEVER invent achievements.
+
+13. NEVER invent responsibilities.
+
+14. NEVER invent metrics, percentages, numbers, revenue,
+performance improvements, users, or other measurable results.
+
+15. NEVER claim that the candidate has a skill merely because
+that skill appears in the job description.
+
+16. A job-description keyword may only be used when the existing
+resume clearly demonstrates that skill, technology, concept,
+responsibility, or experience.
+
+17. If a job requirement is not supported by the resume,
+place it in keywords_not_used instead of adding it to the resume.
+
+18. You may rewrite existing information using stronger,
+professional language.
+
+19. You may reorder existing skills based on job relevance.
+
+20. You may prioritize the candidate's most relevant existing
+projects and experience.
+
+21. You may improve existing bullet points without changing
+their factual meaning.
+
+22. Do not keyword stuff.
+
+23. Keep the resume ATS-friendly.
+
+24. Keep the writing concise and professional.
+
+25. Preserve the candidate's actual background exactly.
+
+IMPORTANT:
+
+The optimized resume must remain truthful even if that produces
+a lower match with the job description.
+
+Do not try to make the candidate appear more qualified than
+the original resume supports.
 
 Return ONLY valid JSON.
+
 Do not use markdown.
-Do not use backticks.
-Do not explain anything outside JSON.
+
+Do not use code fences.
+
+Do not write explanations outside the JSON object.
 `,
         },
 
         {
           role: "user",
-          content: `
-Create an ATS-optimized version of the candidate's resume for the
-following job description.
 
-==========================
-CURRENT RESUME
-==========================
+          content: `
+Create an ATS-optimized version of the candidate's existing resume
+for the provided job description.
+
+==============================
+EXISTING RESUME
+==============================
 
 ${textFromPdf.text}
 
-==========================
+==============================
 JOB DESCRIPTION
-==========================
+==============================
 
 ${jd}
 
-==========================
-OUTPUT
-==========================
+==============================
+REQUIRED OUTPUT
+==============================
 
-Return ONLY this JSON structure:
+Return exactly this JSON structure:
 
 {
   "target_job_title": "",
@@ -346,41 +427,97 @@ Return ONLY this JSON structure:
   "optimization_notes": []
 }
 
-Rules for the output:
+OUTPUT RULES:
 
-- target_job_title should match the role being applied for.
-- professional_summary should be 3-4 concise sentences.
-- skills should contain only skills supported by the existing resume.
-- experience must contain only experience present in the original resume.
-- projects must contain only projects present in the original resume.
-- education must contain only education present in the original resume.
-- certifications must contain only certifications present in the original resume.
-- Rewrite bullets to emphasize relevance to the job description.
-- Use strong action verbs.
-- Include measurable results only when they already exist in the resume.
-- Do not create fake numbers.
-- ats_keywords_used should contain job-description keywords that are
-  genuinely supported by the resume and naturally incorporated.
-- keywords_not_used should contain important job-description keywords
-  that cannot honestly be claimed from the resume.
-- optimization_notes should explain the major changes made.
-- Keep the resume concise and suitable for a professional one-to-two-page resume.
+- target_job_title should identify the role from the job description.
+
+- professional_summary should contain 3-4 concise sentences.
+
+- The professional summary must only describe experience,
+skills, education, and projects supported by the existing resume.
+
+- skills must contain ONLY skills already demonstrated in the resume.
+
+- Do not add skills simply because they appear in the job description.
+
+- experience must contain ONLY experience found in the existing resume.
+
+- Do not create new companies, positions, dates, or responsibilities.
+
+- projects must contain ONLY projects found in the existing resume.
+
+- Do not create new projects.
+
+- education must contain ONLY education found in the existing resume.
+
+- certifications must contain ONLY certifications found in the existing resume.
+
+- Existing information may be rewritten for clarity and stronger
+ATS relevance.
+
+- Use strong action verbs when rewriting existing bullets.
+
+- Preserve the original factual meaning.
+
+- Do not create numbers or measurable achievements.
+
+- Do not claim technologies that are not supported by the resume.
+
+- ats_keywords_used must contain only job-description keywords
+that are genuinely supported by the existing resume and
+naturally included in the optimized resume.
+
+- keywords_not_used must contain important job-description
+keywords that cannot honestly be claimed from the resume.
+
+- optimization_notes should briefly explain the major changes
+made to improve ATS relevance.
+
+- Do not include unsupported technologies in ats_keywords_used.
+
+- Do not remove important factual information from the original
+resume merely to make it shorter.
+
+- Keep the optimized resume suitable for a professional
+one-to-two-page resume.
+
 - Return ONLY valid JSON.
 `,
         },
       ],
 
-      temperature: 0.15,
+      temperature: 0.1,
     });
 
-    const aiResponse = completion.choices[0].message.content;
+    // -----------------------------------------
+    // READ AI RESPONSE
+    // -----------------------------------------
 
-    console.log("========== OPTIMIZED RESUME RESPONSE ==========");
+    const aiResponse =
+      completion?.choices?.[0]?.message?.content;
+
+    if (!aiResponse) {
+      return res.status(500).json({
+        error: "AI returned an empty optimization response.",
+      });
+    }
+
+    console.log(
+      "========== OPTIMIZED RESUME RESPONSE ==========",
+    );
+
     console.log(aiResponse);
-    console.log("===============================================");
+
+    console.log(
+      "===============================================",
+    );
+
+    // -----------------------------------------
+    // CLEAN JSON RESPONSE
+    // -----------------------------------------
 
     const cleaned = aiResponse
-      .replace(/```json/g, "")
+      .replace(/```json/gi, "")
       .replace(/```/g, "")
       .trim();
 
@@ -388,35 +525,92 @@ Rules for the output:
 
     try {
       parsed = JSON.parse(cleaned);
-    } catch {
-      console.error("Invalid optimized resume JSON");
+    } catch (error) {
+      console.error(
+        "Invalid optimized resume JSON:",
+        error,
+      );
+
+      console.log("Cleaned AI response:");
       console.log(cleaned);
 
       return res.status(500).json({
-        error: "AI returned invalid JSON",
+        error: "AI returned invalid JSON.",
       });
     }
 
-    parsed.target_job_title ??= "";
-    parsed.professional_summary ??= "";
-    parsed.skills ??= [];
-    parsed.experience ??= [];
-    parsed.projects ??= [];
-    parsed.education ??= [];
-    parsed.certifications ??= [];
-    parsed.ats_keywords_used ??= [];
-    parsed.keywords_not_used ??= [];
-    parsed.optimization_notes ??= [];
+    // -----------------------------------------
+    // NORMALIZE RESPONSE
+    // -----------------------------------------
+
+    parsed.target_job_title =
+      typeof parsed.target_job_title === "string"
+        ? parsed.target_job_title
+        : "";
+
+    parsed.professional_summary =
+      typeof parsed.professional_summary === "string"
+        ? parsed.professional_summary
+        : "";
+
+    parsed.skills = Array.isArray(parsed.skills)
+      ? parsed.skills
+      : [];
+
+    parsed.experience = Array.isArray(parsed.experience)
+      ? parsed.experience
+      : [];
+
+    parsed.projects = Array.isArray(parsed.projects)
+      ? parsed.projects
+      : [];
+
+    parsed.education = Array.isArray(parsed.education)
+      ? parsed.education
+      : [];
+
+    parsed.certifications = Array.isArray(
+      parsed.certifications,
+    )
+      ? parsed.certifications
+      : [];
+
+    parsed.ats_keywords_used = Array.isArray(
+      parsed.ats_keywords_used,
+    )
+      ? parsed.ats_keywords_used
+      : [];
+
+    parsed.keywords_not_used = Array.isArray(
+      parsed.keywords_not_used,
+    )
+      ? parsed.keywords_not_used
+      : [];
+
+    parsed.optimization_notes = Array.isArray(
+      parsed.optimization_notes,
+    )
+      ? parsed.optimization_notes
+      : [];
+
+    // -----------------------------------------
+    // SEND OPTIMIZED RESUME
+    // -----------------------------------------
 
     return res.status(200).json({
       message: "Resume optimized successfully",
       response: parsed,
     });
   } catch (err) {
-    console.error("Resume Optimization Error:", err);
+    console.error(
+      "Resume Optimization Error:",
+      err,
+    );
 
     return res.status(500).json({
-      error: err.message || "Resume optimization failed.",
+      error:
+        err.message ||
+        "Resume optimization failed.",
     });
   }
 });

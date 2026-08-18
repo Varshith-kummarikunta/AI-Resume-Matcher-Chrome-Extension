@@ -8,6 +8,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+    if (message.type === "OPTIMIZE_RESUME") {
+    optimizeResume(message, sendResponse);
+    return true;
+  }
+
   if (message.type === "RESUME") {
     storedResume = message.base64;
     storedFileName = message.fileName;
@@ -235,6 +240,87 @@ async function callApi(message, sendResponse) {
 
     sendResponse({
       error: err.message || "Network request failed.",
+    });
+  }
+}
+
+
+async function optimizeResume(message, sendResponse) {
+  if (!storedResume) {
+    sendResponse({
+      error: "Upload the resume first.",
+    });
+
+    return;
+  }
+
+  if (!message.discription) {
+    sendResponse({
+      error: "Job description is required.",
+    });
+
+    return;
+  }
+
+  try {
+    const apiData = await fetch(
+      "https://ai-resume-matcher-chrome-extension-production.up.railway.app/optimize-resume",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          jd: message.discription,
+          base64: storedResume,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    const text = await apiData.text();
+
+    console.log("Optimize Resume Raw Response:", text);
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      sendResponse({
+        error: `Backend returned invalid JSON (HTTP ${apiData.status})`,
+      });
+
+      return;
+    }
+
+    console.log("Optimize Resume API Response:", data);
+
+    if (!apiData.ok) {
+      sendResponse({
+        error: data.error || `Server error (HTTP ${apiData.status})`,
+      });
+
+      return;
+    }
+
+    if (!data.response) {
+      sendResponse({
+        error: "Invalid optimization response from server.",
+      });
+
+      return;
+    }
+
+    sendResponse({
+      success: true,
+      result: data.response,
+      fileName: storedFileName,
+    });
+  } catch (err) {
+    console.error("Resume Optimization Fetch Error:", err);
+
+    sendResponse({
+      error: err.message || "Resume optimization request failed.",
     });
   }
 }
