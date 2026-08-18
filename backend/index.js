@@ -218,3 +218,205 @@ Return ONLY valid JSON.
     });
   }
 });
+
+//////////new///////////
+
+app.post("/optimize-resume", async (req, res) => {
+  console.log("Resume optimization request received");
+
+  try {
+    let { jd, base64 } = req.body;
+
+    if (!jd || !base64) {
+      return res.status(400).json({
+        error: "Job description and resume are required.",
+      });
+    }
+
+    const parts = base64.split(",");
+
+    if (parts.length < 2) {
+      return res.status(400).json({
+        error: "Invalid resume format.",
+      });
+    }
+
+    base64 = parts[1];
+
+    const buffer = Buffer.from(base64, "base64");
+
+    const parser = new PDFParse({ data: buffer });
+
+    const textFromPdf = await parser.getText();
+
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-120b",
+
+      messages: [
+        {
+          role: "system",
+          content: `
+You are an expert resume writer, ATS optimization specialist,
+technical recruiter, and career coach.
+
+Your task is to create a job-targeted resume from an existing resume
+and a specific job description.
+
+CRITICAL RULES:
+
+1. NEVER invent experience.
+2. NEVER invent employment history.
+3. NEVER invent education.
+4. NEVER invent certifications.
+5. NEVER invent projects.
+6. NEVER invent technologies the candidate has not demonstrated.
+7. NEVER invent job titles, companies, dates, achievements, metrics,
+   responsibilities, or qualifications.
+8. You may rewrite existing information professionally.
+9. You may improve bullet points using information already present.
+10. You may reorder existing skills according to the job description.
+11. You may prioritize relevant projects and experience.
+12. You may naturally incorporate job-description keywords ONLY when
+    the existing resume supports that skill or concept.
+13. Do not keyword stuff.
+14. Keep the resume ATS-friendly.
+15. Use clear professional language.
+16. Preserve factual accuracy above everything else.
+
+Return ONLY valid JSON.
+Do not use markdown.
+Do not use backticks.
+Do not explain anything outside JSON.
+`,
+        },
+
+        {
+          role: "user",
+          content: `
+Create an ATS-optimized version of the candidate's resume for the
+following job description.
+
+==========================
+CURRENT RESUME
+==========================
+
+${textFromPdf.text}
+
+==========================
+JOB DESCRIPTION
+==========================
+
+${jd}
+
+==========================
+OUTPUT
+==========================
+
+Return ONLY this JSON structure:
+
+{
+  "target_job_title": "",
+  "professional_summary": "",
+  "skills": [],
+  "experience": [
+    {
+      "company": "",
+      "job_title": "",
+      "dates": "",
+      "bullets": []
+    }
+  ],
+  "projects": [
+    {
+      "name": "",
+      "technologies": "",
+      "bullets": []
+    }
+  ],
+  "education": [
+    {
+      "degree": "",
+      "institution": "",
+      "dates": ""
+    }
+  ],
+  "certifications": [],
+  "ats_keywords_used": [],
+  "keywords_not_used": [],
+  "optimization_notes": []
+}
+
+Rules for the output:
+
+- target_job_title should match the role being applied for.
+- professional_summary should be 3-4 concise sentences.
+- skills should contain only skills supported by the existing resume.
+- experience must contain only experience present in the original resume.
+- projects must contain only projects present in the original resume.
+- education must contain only education present in the original resume.
+- certifications must contain only certifications present in the original resume.
+- Rewrite bullets to emphasize relevance to the job description.
+- Use strong action verbs.
+- Include measurable results only when they already exist in the resume.
+- Do not create fake numbers.
+- ats_keywords_used should contain job-description keywords that are
+  genuinely supported by the resume and naturally incorporated.
+- keywords_not_used should contain important job-description keywords
+  that cannot honestly be claimed from the resume.
+- optimization_notes should explain the major changes made.
+- Keep the resume concise and suitable for a professional one-to-two-page resume.
+- Return ONLY valid JSON.
+`,
+        },
+      ],
+
+      temperature: 0.15,
+    });
+
+    const aiResponse = completion.choices[0].message.content;
+
+    console.log("========== OPTIMIZED RESUME RESPONSE ==========");
+    console.log(aiResponse);
+    console.log("===============================================");
+
+    const cleaned = aiResponse
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    let parsed;
+
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      console.error("Invalid optimized resume JSON");
+      console.log(cleaned);
+
+      return res.status(500).json({
+        error: "AI returned invalid JSON",
+      });
+    }
+
+    parsed.target_job_title ??= "";
+    parsed.professional_summary ??= "";
+    parsed.skills ??= [];
+    parsed.experience ??= [];
+    parsed.projects ??= [];
+    parsed.education ??= [];
+    parsed.certifications ??= [];
+    parsed.ats_keywords_used ??= [];
+    parsed.keywords_not_used ??= [];
+    parsed.optimization_notes ??= [];
+
+    return res.status(200).json({
+      message: "Resume optimized successfully",
+      response: parsed,
+    });
+  } catch (err) {
+    console.error("Resume Optimization Error:", err);
+
+    return res.status(500).json({
+      error: err.message || "Resume optimization failed.",
+    });
+  }
+});
