@@ -354,11 +354,64 @@ their factual meaning.
 
 IMPORTANT:
 
-The optimized resume must remain truthful even if that produces
-a lower match with the job description.
+The optimized resume must remain completely truthful even if that
+produces a lower match with the job description.
 
 Do not try to make the candidate appear more qualified than
 the original resume supports.
+
+FACTUAL DATE AND EDUCATION RULES:
+
+1. Treat dates in the existing resume as authoritative.
+
+2. If an education program has an end date in the past, do NOT describe
+   the candidate as currently pursuing that education.
+
+3. If the resume shows a completed degree with a past graduation date,
+   describe it as completed or as a graduate.
+
+4. Never use phrases such as:
+   "currently pursuing",
+   "currently studying",
+   "expected to graduate",
+   "final-year student",
+   or similar wording when the existing resume shows that the
+   education has already been completed.
+
+5. Never change, extend, shorten, or reinterpret education dates.
+
+6. Never change employment dates, project dates, certification dates,
+   or other factual dates from the original resume.
+
+7. Never infer current status from the job description.
+
+8. The existing resume always takes priority over the job description
+   when determining the candidate's education status, experience,
+   skills, projects, certifications, and dates.
+
+FINAL FACTUAL CHECK:
+
+Before returning the JSON, verify that every statement in the
+professional summary and every rewritten section is supported by
+the existing resume.
+
+In particular, verify:
+
+- education completion status
+- education dates
+- employment status
+- employment dates
+- project ownership
+- technologies
+- certifications
+- achievements
+- measurable results
+
+If a statement cannot be verified from the existing resume,
+remove or rewrite that statement.
+
+Do not try to improve the candidate's qualifications by changing
+their factual status.
 
 Return ONLY valid JSON.
 
