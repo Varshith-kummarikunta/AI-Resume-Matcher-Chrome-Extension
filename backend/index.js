@@ -391,27 +391,98 @@ FACTUAL DATE AND EDUCATION RULES:
 
 FINAL FACTUAL CHECK:
 
-Before returning the JSON, verify that every statement in the
-professional summary and every rewritten section is supported by
-the existing resume.
+Before returning the JSON, perform a final factual audit against
+the EXISTING RESUME.
 
-In particular, verify:
+Every piece of information in the optimized resume must be
+traceable to the existing resume.
 
+Verify all of the following:
+
+- candidate's education
 - education completion status
 - education dates
+- employment history
 - employment status
 - employment dates
+- project names
 - project ownership
-- technologies
+- project technologies
+- programming languages
+- frameworks
+- libraries
+- databases
+- cloud platforms
 - certifications
 - achievements
+- responsibilities
 - measurable results
+- tools and technologies
 
-If a statement cannot be verified from the existing resume,
-remove or rewrite that statement.
+SPECIAL EDUCATION RULE:
 
-Do not try to improve the candidate's qualifications by changing
-their factual status.
+If the existing resume contains a completed degree with a past
+graduation date, describe the candidate as a graduate.
+
+Never describe a completed degree as:
+
+- currently pursuing
+- currently studying
+- expected to graduate
+- final-year student
+- ongoing degree
+- or any equivalent wording.
+
+SPECIAL SKILL RULE:
+
+A technology, tool, framework, library, database, cloud platform,
+programming language, methodology, or soft skill may appear in the
+optimized resume only when the existing resume provides evidence
+for it.
+
+The job description must NEVER be treated as evidence that the
+candidate possesses a skill.
+
+SPECIAL PROJECT RULE:
+
+Do not create additional project bullets merely to satisfy the job
+description.
+
+Every rewritten project bullet must preserve the factual meaning
+of the original project.
+
+Do not convert a general project statement into an unsupported
+claim about testing, debugging, performance optimization,
+teamwork, collaboration, code reviews, or production scale.
+
+SPECIAL METRIC RULE:
+
+Never add:
+
+- percentages
+- numbers
+- user counts
+- performance improvements
+- revenue
+- rankings
+- response times
+- traffic
+- business impact
+- or other measurable achievements
+
+unless the exact information exists in the original resume.
+
+FINAL DECISION:
+
+Truthfulness has higher priority than ATS keyword coverage.
+
+If including a job-description keyword would require inventing,
+assuming, exaggerating, or inferring experience, do NOT include it.
+
+Place that keyword in keywords_not_used instead.
+
+Before returning the JSON, silently remove any unsupported claim
+you detect.
 
 Return ONLY valid JSON.
 
@@ -485,6 +556,13 @@ OUTPUT RULES:
 - target_job_title should identify the role from the job description.
 
 - professional_summary should contain 3-4 concise sentences.
+
+- The summary must describe the candidate's actual current status
+based only on the existing resume.
+
+- If the candidate has already graduated, explicitly use
+"graduate" or equivalent completed-degree wording rather than
+"currently pursuing".
 
 - The professional summary must only describe experience,
 skills, education, and projects supported by the existing resume.
