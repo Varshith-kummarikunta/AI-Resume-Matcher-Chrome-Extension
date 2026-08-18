@@ -83,61 +83,73 @@ function App() {
   }
 
   function handleViewHistory(item) {
-  setResult({
-    score: item.score ?? 0,
+    if (!item) return;
 
-    match_level: item.matchLevel || "Unknown",
+    const suggestions =
+      item.suggestions && typeof item.suggestions === "object"
+        ? {
+            improve: item.suggestions.improve || "",
+            skills: item.suggestions.skills || "",
+            career: item.suggestions.career || "",
+          }
+        : {
+            improve: "",
+            skills: "",
+            career: "",
+          };
 
-    reason: item.reason || "",
+    const certifications = Array.isArray(item.certifications)
+      ? item.certifications
+      : [];
 
-    interview_probability:
-      item.interviewProbability || null,
+    const projects = Array.isArray(item.projects) ? item.projects : [];
 
-    matched_keywords:
-      item.matchedKeywords || [],
+    setResult({
+      // Main ATS information
+      score: item.score ?? 0,
+      match_level: item.matchLevel || "Unknown",
+      reason: item.reason || "",
 
-    missing_keywords:
-      item.missingKeywords || [],
+      // Interview
+      interview_probability: item.interviewProbability || null,
 
-    strengths:
-      item.strengths || [],
-
-    weaknesses:
-      item.weaknesses || [],
-
-    suggestions:
-      item.suggestions || {
-        improve: "",
-        skills: "",
-        career: "",
-      },
-
-    recommended_certifications:
-      Array.isArray(item.certifications)
-        ? item.certifications
+      // Keywords
+      matched_keywords: Array.isArray(item.matchedKeywords)
+        ? item.matchedKeywords
         : [],
 
-    recommended_projects:
-      Array.isArray(item.projects)
-        ? item.projects
+      missing_keywords: Array.isArray(item.missingKeywords)
+        ? item.missingKeywords
         : [],
 
-    skills_match:
-      item.skillsMatch ?? 0,
+      // Resume analysis
+      strengths: Array.isArray(item.strengths) ? item.strengths : [],
 
-    experience_match:
-      item.experienceMatch ?? 0,
+      weaknesses: Array.isArray(item.weaknesses) ? item.weaknesses : [],
 
-    education_match:
-      item.educationMatch ?? 0,
+      // AI suggestions
+      suggestions,
 
-    overall_feedback:
-      item.overallFeedback || "",
-  });
+      // Recommendations
+      recommended_certifications: certifications,
 
-  setResumeName(item.resumeName || "Resume");
-}
+      recommended_projects: projects,
 
+      // Match breakdown
+      skills_match: item.skillsMatch ?? 0,
+      experience_match: item.experienceMatch ?? 0,
+      education_match: item.educationMatch ?? 0,
+
+      // Overall feedback
+      overall_feedback: item.overallFeedback || "",
+    });
+
+    setResumeName(item.resumeName || "Resume");
+
+    // Since this is a historical analysis,
+    // don't show the "Resume uploaded successfully" message.
+    setResumeUploaded("");
+  }
 
   return (
     <div className="w-[390px] min-h-screen bg-slate-100 p-5">
